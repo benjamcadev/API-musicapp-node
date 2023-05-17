@@ -30,7 +30,7 @@ router.get("/list/:page?", check.auth, ArtistController.list);
 router.put("/update/:id",check.auth,ArtistController.update);
 router.delete("/remove/:id",check.auth,ArtistController.remove);
 router.post("/upload/:id",[check.auth, uploads.single("file0")], ArtistController.upload);
-router.get("/avatar/:file", ArtistController.image );
+router.get("/image/:file", ArtistController.image );
 // exportar router
 module.exports = router;
 

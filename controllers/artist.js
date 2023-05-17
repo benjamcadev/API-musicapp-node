@@ -127,9 +127,15 @@ const remove = async (req, res) => {
         const artistRemoved = await Artist.findByIdAndDelete(artistId);
         
         // remove de albums
-        const albumRemoved = await Album.find({artist: artistRemoved._id}).remove();
-         // remove de songs
-        const songRemoved = await Song.find({album: albumRemoved._id}).remove();
+        const albumRemoved = await Album.find({artist: artistId._id}).remove();
+
+        albumRemoved.forEach(async (album) => {
+            // remove de songs
+            const songRemoved = await Song.find({album: album._id}).remove();
+
+            album.remove();
+        });
+        
 
        
 
@@ -137,6 +143,7 @@ const remove = async (req, res) => {
         // devolver un resultado
         return res.status(200).send({
             status: "success",
+            message: "Artista eliminado",
             artistRemoved
         });
     } catch (error) {
@@ -223,12 +230,12 @@ const image = (req,res) => {
                 message: "No existe la imagen"
             });
         }
-
+        // devolver el archivo
         return res.sendFile(path.resolve(filePath));
 
     })
 
-    // devolver el archivo
+   
 }
 
 // exportar acciones
