@@ -289,16 +289,6 @@ const update = (req,res) => {
               
         })
 
-     
-
-      
-
-    
-
-       
-
-
-      
         
     })
     .catch((error) => {

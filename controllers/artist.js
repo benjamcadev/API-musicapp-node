@@ -1,6 +1,9 @@
 // importaciones
 
 const Artist = require("../models/artist");
+const Album = require("../models/album");
+const Song = require("../models/song");
+
 const mongoosePagination = require("mongoose-pagination");
 
 
@@ -122,10 +125,13 @@ const remove = async (req, res) => {
     try {
         // hacer consulta para buscar y eliminar el artista con await
         const artistRemoved = await Artist.findByIdAndDelete(artistId);
-
+        
         // remove de albums
+        const albumRemoved = await Album.find({artist: artistRemoved._id}).remove();
+         // remove de songs
+        const songRemoved = await Song.find({album: albumRemoved._id}).remove();
 
-        // remove de songs
+       
 
 
         // devolver un resultado
@@ -141,6 +147,89 @@ const remove = async (req, res) => {
     }
     
 }
+const upload = (req,res) => {
+    // capturar el id del artista
+    let artistId = req.params.id;
+
+    // configuracion de subida con multer
+
+
+    // recoger fichero de imagen
+    if (!req.file) {
+        return res.status(404).send({
+            status: "error",
+            message: "No se ha enviado la imagen"
+            
+        });
+    }
+
+    // conseguir el nombre del archivo
+    let image = req.file.originalname;
+
+    // sacar info de la imagen
+    const imageSplit = image.split("\.");
+    const extension = imageSplit[1];
+
+    // comprobar la extension
+    if (extension != "png" && extension != "jpg" && extension != "jpeg" && extension != "gif") {
+        // borrar archivo
+        const filePath = req.file.path;
+        const fileDeleted = fs.unlinkSync(filePath);
+
+        // devolver error
+        return res.status(404).send({
+            status: "error",
+            message: "La extension no es valida"      
+        });
+    }
+
+    // si todo es correcto guardamos imagen
+    Artist.findOneAndUpdate(
+        {_id: artistId}, {image: req.file.filename}, {new:true} //Actualizar el campo imagen en la bd
+        ) 
+    .then((artistUpdated) => {
+
+
+        return res.status(200).send({
+            status: "success",
+            user: artistUpdated,
+            file: req.file
+            
+        });
+
+
+    })
+    .catch((error) => {
+        return res.status(404).send({
+            status: "error",
+            message: "Hubo un error al subir el archivo"      
+        });
+    })
+}
+
+const image = (req,res) => {
+    // Sacar el parametro de la url
+    const file = req.params.file;
+
+    // montar el path real de la imagen
+    const filePath = "./uploads/artists/"+file;
+
+    // comprobar que existe el fichero
+    fs.stat(filePath, (error, exists) => {
+
+        if (error || !exists) {
+            return res.status(404).send({
+                status: "error",
+                message: "No existe la imagen"
+            });
+        }
+
+        return res.sendFile(path.resolve(filePath));
+
+    })
+
+    // devolver el archivo
+}
 
 // exportar acciones
 module.exports = {
@@ -149,5 +238,7 @@ module.exports = {
     one,
     list,
     update,
-    remove
+    remove,
+    upload,
+    image
 }
